@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Upload Email</h2>
+<form method="post" enctype="multipart/form-data" class="mt-3">
+  <div class="mb-3">
+    <input type="file" name="email_file" class="form-control" required>
+  </div>
+  <button type="submit" class="btn btn-success">Upload & Analyze</button>
+</form>
+{% endblock %}

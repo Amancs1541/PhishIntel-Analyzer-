@@ -1,0 +1,6 @@
+/* static/css/styles.css */
+body { background: #f8f9fa; }
+.card { border-radius: 8px; }
+pre { font-size: 0.9rem; }
+.table code { font-size: 0.85rem; }
+.badge { font-size: 0.85rem; }

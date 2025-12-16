@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-5 fw-bold">Dashboard Overview</h2>
+
+<div class="row mb-5 g-4">
+  <div class="col-md-4">
+    <div class="card text-bg-danger shadow-sm h-100">
+      <div class="card-body text-center p-4">
+        <h5 class="card-title fw-semibold"><i class="bi bi-exclamation-octagon-fill"></i> Phishing</h5>
+        <p class="display-4 fw-bold">{{ stats.phishing }}</p>
+        <small class="text-white-50">High-risk threats detected</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-bg-warning shadow-sm h-100">
+      <div class="card-body text-center p-4">
+        <h5 class="card-title fw-semibold"><i class="bi bi-question-circle-fill"></i> Suspicious</h5>
+        <p class="display-4 fw-bold">{{ stats.suspicious }}</p>
+        <small class="text-dark-50">Requires further review</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-bg-success shadow-sm h-100">
+      <div class="card-body text-center p-4">
+        <h5 class="card-title fw-semibold"><i class="bi bi-check-circle-fill"></i> Clean</h5>
+        <p class="display-4 fw-bold">{{ stats.clean }}</p>
+        <small class="text-white-50">Verified as safe</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 class="mb-4 fw-semibold">Recent Email Analysis</h3>
+<div class="card p-3 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr><th>ID</th><th>Subject</th><th>Sender</th><th>Status</th><th>Verdict</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for e in emails %}
+            <tr>
+              <td>{{ e.id }}</td>
+              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ e.subject }}</span></td>
+              <td>{{ e.sender }}</td>
+              <td><span class="badge bg-secondary-subtle text-secondary">{{ e.status }}</span></td>
+              <td><span class="badge rounded-pill bg-{{ 'danger' if e.verdict=='phishing' else 'warning' if e.verdict=='suspicious' else 'success' }} text-uppercase">{{ e.verdict }}</span></td>
+              <td><a href="{{ url_for('report_detail', email_id=e.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View Report</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

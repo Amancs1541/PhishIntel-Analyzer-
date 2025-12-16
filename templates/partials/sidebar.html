@@ -1,0 +1,21 @@
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+  <div class="position-sticky pt-3 sidebar-sticky">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ['reports','report_detail','print_report'] %}active{% endif %}" href="{{ url_for('reports') }}">Reports</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}" href="{{ url_for('upload') }}">Upload email</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'training' %}active{% endif %}" href="{{ url_for('training') }}">Training</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}">Settings</a>
+      </li>
+    </ul>
+  </div>
+</nav>

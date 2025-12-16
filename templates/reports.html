@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reports</h2>
+<table class="table table-hover mt-3">
+  <thead class="table-dark">
+    <tr><th>ID</th><th>Subject</th><th>Verdict</th><th>Status</th><th>Created</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    {% for e in emails %}
+    <tr>
+      <td>{{ e.id }}</td>
+      <td>{{ e.subject }}</td>
+      <td>{{ e.verdict }}</td>
+      <td>{{ e.status }}</td>
+      <td>{{ e.created_at }}</td>
+      <td><a href="{{ url_for('report_detail', email_id=e.id) }}" class="btn btn-sm btn-primary">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

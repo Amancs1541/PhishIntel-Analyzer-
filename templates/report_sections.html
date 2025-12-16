@@ -1,0 +1,107 @@
+<div class="row g-3">
+  <!-- Summary -->
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <h5>Summary</h5>
+      <p><strong>Subject:</strong> {{ email.subject or '(no subject)' }}</p>
+      <p><strong>Sender:</strong> {{ email.sender }}</p>
+      <p><strong>Sender domain:</strong> {{ email.sender_domain }}</p>
+      <p><strong>Received IPs:</strong> {{ email.received_ip }}</p>
+      <p><strong>Verdict:</strong>
+        <span class="badge bg-{% if email.verdict=='phishing' %}danger{% elif email.verdict=='suspicious' %}warning{% else %}success{% endif %}">
+          {{ email.verdict or 'pending' }}
+        </span>
+      </p>
+      <p><strong>NLP score:</strong> {{ "%.2f"|format(email.nlp_score or 0.0) }}</p>
+    </div></div>
+  </div>
+
+  <!-- URLs -->
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <h5>URLs (VirusTotal)</h5>
+      <table class="table table-sm">
+        <thead><tr><th>URL</th><th>Defanged</th><th>VT malicious</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for u in report.get('urls', []) %}
+          {% set vt = u.vt %}
+          <tr>
+            <td><code>{{ u.url }}</code></td>
+            <td><code>{{ u.defanged }}</code></td>
+            <td>{{ vt.last_analysis_stats.malicious if vt and vt.last_analysis_stats else 0 }}</td>
+            <td>
+              {% if u.flagged %}
+                <span class="badge bg-danger">detected</span>
+              {% else %}
+                <span class="badge bg-success">clean</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <!-- IPs -->
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <h5>IPs (VirusTotal + AbuseIPDB)</h5>
+      <table class="table table-sm">
+        <thead><tr><th>IP</th><th>VT malicious</th><th>Abuse score</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for ip, data in report.get('ips', {}).items() %}
+          <tr>
+            <td><code>{{ ip }}</code></td>
+            <td>{{ data.vt.last_analysis_stats.malicious if data.vt and data.vt.last_analysis_stats else 0 }}</td>
+            <td>{{ data.abuse.score or 0 }}</td>
+            <td>
+              {% if data.flagged %}
+                <span class="badge bg-danger">detected</span>
+              {% else %}
+                <span class="badge bg-success">clean</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- Attachments -->
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <h5>Attachments (VirusTotal)</h5>
+      <table class="table table-sm">
+        <thead><tr><th>Filename</th><th>SHA256</th><th>VT malicious</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in attachments %}
+          <tr>
+            <td>{{ a.filename }}</td>
+            <td><code>{{ a.file_hash or 'pending' }}</code></td>
+            <td>{{ a.vt_json.last_analysis_stats.malicious if a.vt_json and a.vt_json.last_analysis_stats else 0 }}</td>
+            <td>
+              {% if a.vt_json and a.vt_json.last_analysis_stats.malicious > 0 %}
+                <span class="badge bg-danger">detected</span>
+              {% else %}
+                <span class="badge bg-success">clean</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<!-- Headers -->
+<div class="card mt-3">
+  <div class="card-body">
+    <h5>Headers</h5>
+    <pre style="white-space: pre-wrap;">{{ email.headers_json }}</pre>
+  </div>
+</div>

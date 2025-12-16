@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-5 fw-bold"><i class="bi bi-sliders"></i> User Settings</h2>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-5 shadow-sm">
+            <h4 class="mb-4 text-primary fw-semibold">API Integrations</h4>
+            <form method="post" class="mt-3">
+              <div class="mb-3">
+                <label for="vtKey" class="form-label fw-semibold">VirusTotal API Key</label>
+                <input type="text" name="virustotal_key" id="vtKey" class="form-control" value="{{ current_user.virustotal_key or '' }}" placeholder="Enter your VirusTotal API key">
+                <div class="form-text">Used for checking file hashes and URLs against the global threat intelligence database.</div>
+              </div>
+              <div class="mb-3">
+                <label for="abuseDbKey" class="form-label fw-semibold">AbuseIPDB API Key</label>
+                <input type="text" name="abuseipdb_key" id="abuseDbKey" class="form-control" value="{{ current_user.abuseipdb_key or '' }}" placeholder="Enter your AbuseIPDB API key">
+                <div class="form-text">Used for checking IP reputation and abuse scores.</div>
+              </div>
+              <div class="mb-5">
+                <label for="otxKey" class="form-label fw-semibold">AlienVault OTX API Key</label>
+                <input type="text" name="otx_key" id="otxKey" class="form-control" value="{{ current_user.otx_key or '' }}" placeholder="Enter your OTX API key">
+                <div class="form-text">Used for threat indicators, pulses, and community-driven threat intelligence.</div>
+              </div>
+
+              <h4 class="mb-4 mt-5 text-primary fw-semibold">Security</h4>
+              <div class="mb-5">
+                <label for="passwordInput" class="form-label fw-semibold">Change Password</label>
+                <input type="password" name="password" id="passwordInput" class="form-control" placeholder="New password (leave blank to keep current)">
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-save-fill"></i> Save Settings
+              </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

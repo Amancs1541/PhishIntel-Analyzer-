@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-5 fw-bold"><i class="bi bi-bar-chart-line-fill"></i> Analysis Report #{{ email.id }}</h2>
+{% if email.progress < 100 %}
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+  <div>
+    <i class="bi bi-hourglass-split"></i> Report is still processing...
+    <strong id="progressVal">{{ email.progress }}%</strong> complete.
+  </div>
+</div>
+<script>
+function pollStatus() {
+  fetch("{{ url_for('report_status', email_id=email.id) }}")
+    .then(resp => resp.json())
+    .then(data => {
+      // update the percentage in the alert
+      document.getElementById('progressVal').innerText = data.progress + "%";
+      if (data.progress >= 100) {
+        location.reload(); // reload once complete
+      } else {
+        setTimeout(pollStatus, 1000); // poll again in 3s
+      }
+    })
+    .catch(err => console.error(err));
+}
+// start polling immediately
+pollStatus();
+</script>
+{% endif %}
+
+
+<div class="row g-4 mb-5">
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title fw-semibold text-primary">Email Metadata</h5>
+        <hr class="text-muted">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Subject</dt><dd class="col-sm-8 text-truncate">{{ email.subject }}</dd>
+          <dt class="col-sm-4">Sender</dt><dd class="col-sm-8">{{ email.sender }}</dd>
+          <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ email.status }}</dd>
+          <dt class="col-sm-4">NLP Score</dt><dd class="col-sm-8">{{ email.nlp_score }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  {% if report and report.combined %}
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-{{ 'danger' if email.verdict=='phishing' else 'warning' if email.verdict=='suspicious' else 'success' }}">
+      <div class="card-body text-center d-flex flex-column justify-content-center">
+        <h5 class="card-title fw-bold">Final Verdict</h5>
+        <div class="my-3 flex-grow-1 d-flex align-items-center justify-content-center flex-column">
+          <span class="badge display-6 bg-{{ 'danger' if email.verdict=='phishing' else 'warning' if email.verdict=='suspicious' else 'success' }} text-uppercase px-4 py-2 rounded-pill shadow">
+            {{ report.combined.verdict }}
+          </span>
+          <div class="row mt-4 w-100">
+            <div class="col">
+              <p class="mb-0 text-muted small">Risk</p>
+              <p class="fw-bold fs-4">{{ report.combined.risk_final }}</p>
+            </div>
+            <div class="col border-start">
+              <p class="mb-0 text-muted small">Confidence</p>
+              <p class="fw-bold fs-4">{{ report.combined.confidence }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm p-3">
+      <h5 class="card-title fw-semibold text-primary mb-3">Risk Contribution</h5>
+      <div style="flex-grow: 1; min-height: 150px;">
+        <canvas id="riskChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('riskChart');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['NLP','VirusTotal','OTX','AbuseIPDB','Heuristic'],
+    datasets: [{
+      label: 'Risk Contribution',
+      data: [
+        {{ report.combined.signals.nlp.risk }},
+        {{ report.combined.signals.vt.risk }},
+        {{ report.combined.signals.otx.risk }},
+        {{ report.combined.signals.abuseipdb.risk }},
+        {{ report.combined.signals.heuristic.risk }}
+      ],
+      backgroundColor: ['#007aff', '#dc3545','#ffc107','#20c997','#6f42c1'] /* Modern color palette */
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false, // Allows chart to fill container height
+    plugins: { legend: { display: false } },
+    scales: {
+        y: { beginAtZero: true, max: 1, grid: { color: '#e9ecef' } },
+        x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+{% endif %}
+
+<h3 class="mt-4 mb-4 fw-bold">Indicators of Compromise (IOCs)</h3>
+
+<div class="card p-4 shadow-sm">
+    {% if report and report.report.urls %}
+    <h4 class="fw-semibold text-secondary"><i class="bi bi-link-45deg"></i> URLs</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>URL</th><th>Defanged</th><th>VT Malicious</th><th>OTX Pulses</th></tr></thead>
+          <tbody>
+            {% for u in report.report.urls %}
+            <tr>
+              <td><code class="text-danger">{{ u.url }}</code></td>
+              <td>{{ u.defanged }}</td>
+              <td><span class="badge bg-{{ 'danger' if u.vt_malicious > 0 else 'success' }}">{{ u.vt_malicious }}</span></td>
+              <td>{{ u.otx_pulses }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if report and report.report.ips %}
+    <h4 class="fw-semibold text-secondary"><i class="bi bi-geo-alt-fill"></i> IPs</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>IP</th><th>Defanged</th><th>VT Malicious</th><th>Abuse Score</th><th>OTX Pulses</th></tr></thead>
+          <tbody>
+            {% for ip, data in report.report.ips.items() %}
+            <tr>
+              <td><code class="text-danger">{{ ip }}</code></td>
+              <td>{{ data.defanged }}</td>
+              <td><span class="badge bg-{{ 'danger' if data.vt_malicious > 0 else 'success' }}">{{ data.vt_malicious }}</span></td>
+              <td><span class="badge bg-{{ 'danger' if data.abuse_score > 50 else 'warning' if data.abuse_score > 0 else 'success' }}">{{ data.abuse_score }}</span></td>
+              <td>{{ data.otx_pulses }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if report and report.report.domains %}
+    <h4 class="fw-semibold text-secondary"><i class="bi bi-globe"></i> Domains</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>Domain</th><th>Defanged</th><th>VT Malicious</th><th>OTX Pulses</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for d in report.report.domains %}
+            <tr>
+              <td><code class="text-danger">{{ d.domain }}</code></td>
+              <td>{{ d.defanged }}</td>
+              <td><span class="badge bg-{{ 'danger' if d.vt_malicious > 0 else 'success' }}">{{ d.vt_malicious }}</span></td>
+              <td>{{ d.otx_pulses }}</td>
+              <td><span class="badge bg-{{ 'danger' if d.status=='detected' else 'success' }} text-uppercase">{{ d.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if report and report.report.hashes %}
+    <h4 class="fw-semibold text-secondary"><i class="bi bi-fingerprint"></i> Hashes</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>Hash</th><th>VT Malicious</th><th>OTX Pulses</th></tr></thead>
+          <tbody>
+            {% for h in report.report.hashes %}
+            <tr>
+              <td><code class="text-muted small">{{ h.hash }}</code></td>
+              <td><span class="badge bg-{{ 'danger' if h.vt_malicious > 0 else 'success' }}">{{ h.vt_malicious }}</span></td>
+              <td>{{ h.otx_pulses }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<h3 class="mt-5 mb-3 fw-bold">Activity Logs</h3>
+<div class="card p-3 shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for l in logs %}
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="me-auto">
+            <div class="fw-semibold text-muted small">{{ l.ts }}</div>
+            {{ l.message }}
+          </div>
+          <span class="badge bg-{{ 'danger' if l.level == 'ERROR' else 'info' if l.level == 'INFO' else 'warning' }} text-uppercase rounded-pill">{{ l.level }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+</div>
+
+<hr class="my-5 no-print">
+<div class="d-flex justify-content-end gap-3 no-print">
+
+ <a href="{{ url_for('print_report', email_id=email.id) }}" target="_blank" class="btn btn-outline-secondary btn-lg">
+    <i class="bi bi-printer-fill"></i> Print Report
+</a>
+  <form method="POST" action="{{ url_for('delete_report', email_id=email.id) }}"
+        onsubmit="return confirm('⚠️ WARNING: Are you sure you want to permanently delete this report? This action cannot be undone.');">
+    <button type="submit" class="btn btn-danger btn-lg">
+      <i class="bi bi-trash-fill"></i> Delete Report
+    </button>
+  </form>
+</div>
+<hr class="my-5 no-print">
+
+
+</div>
+</div>
+{% endblock %}
