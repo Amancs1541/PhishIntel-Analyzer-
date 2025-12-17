@@ -86,6 +86,20 @@ User → Email Upload → Preprocessing
       → Final Report
 ```
 
+# 📁 Project Structure
+```
+PhishIntel/
+├── instance/                # Instance-specific config (e.g., SQLite DB, secrets)
+├── static/                  # Static assets (CSS, JS, images)
+├── templates/               # HTML templates (Jinja2)
+├── uploads/                 # Uploaded email files / attachments
+├── .env                     # Environment variables (NOT committed)
+├── models.py                # Database models (SQLAlchemy)
+├── requirements.txt         # Python dependencies
+├── utils.py                 # Helper & utility functions
+└── app.py                   # Main Flask application entry point
+```
+
 # 📊 Evaluation Approach
 
 ## PhishIntel Analyzer evaluates emails using:
@@ -101,3 +115,4 @@ User → Email Upload → Preprocessing
 
 
 ## Aggregated phishing risk scoring
+
