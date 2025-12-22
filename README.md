@@ -47,6 +47,7 @@ python-dotenv==1.0.1
 werkzeug==3.0.1
 requests==2.32.3
 transformers==4.43.3
+torch
 
 ```
 # 🛠️ Environment Setup
@@ -61,8 +62,8 @@ cd phishintel-analyzer
 # 2️⃣ Create a Virtual Environment
 
 ```
-python3 -m venv venv
-source venv/bin/activate
+python -m venv venv
+.\venv\bin\activate
 ```
 ### (Windows: venv\Scripts\activate)
 
